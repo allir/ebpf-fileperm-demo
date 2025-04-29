@@ -1,0 +1,6 @@
+fileperm-demo
+fileperm_*.o
+
+bpf/vmlinux/vmlinux_*.h
+
+bpf/libbpf
