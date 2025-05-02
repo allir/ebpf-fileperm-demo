@@ -5,11 +5,12 @@
 
 char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
-#define MAX_FILENAME_LEN 128
+#define MAX_FILENAME_LEN 256
 
 struct event {
     u32 pid;
     u32 mask;
+    s32 ret;
     char filename[MAX_FILENAME_LEN];
 };
 
@@ -68,14 +69,13 @@ int BPF_KRETPROBE(security_file_permission_exit, int ret)
     if (!e)
         return 0;
 
-    __builtin_memset(e, 0, sizeof(*e));
-
-    e->pid = pid;
-    e->mask = fi->mask;
-
     struct file *file = fi->file;
     struct dentry *dentry = BPF_CORE_READ(file, f_path.dentry);
     struct qstr d_name = BPF_CORE_READ(dentry, d_name);
+
+    e->pid = pid;
+    e->mask = fi->mask;
+    e->ret = ret;
 
     bpf_core_read_str(e->filename, sizeof(e->filename), d_name.name);
 

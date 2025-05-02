@@ -16,6 +16,7 @@ import (
 type FilePermEvent struct {
 	Pid      uint32
 	Mask     uint32
+	Ret      int32
 	Filename [128]byte
 }
 
@@ -61,8 +62,12 @@ func main() {
 		// Trim null bytes from the filename
 		filename := string(bytes.Trim(e.Filename[:], "\x00"))
 
-		if strings.HasPrefix(filename, "passwd") || filename == "shadow" || filename == "profile" {
-			fmt.Printf("ALERT: PID %d accessed %s (mask: %s)\n", e.Pid, filename, decodeMask(e.Mask))
+		if e.Ret < 0 {
+			fmt.Printf("ALERT: PID %d failed to access %s (mask: %s)\n", e.Pid, filename, decodeMask(e.Mask))
+		} else {
+			if strings.HasPrefix(filename, "passwd") || filename == "shadow" || filename == "profile" {
+				fmt.Printf("ALERT: PID %d accessed %s (mask: %s)\n", e.Pid, filename, decodeMask(e.Mask))
+			}
 		}
 	}
 }
